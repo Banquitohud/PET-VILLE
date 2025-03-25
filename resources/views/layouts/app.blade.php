@@ -20,9 +20,28 @@
             <a href="{{ route('home') }}">
                 <h1 class="text-3xl font-black">Pet ville</h1>
             </a>
+            @auth
+                <form action="{{ route('posts.index', '') }}" method="GET" class="d-flex">
+                    <input type="text" id="search" name="user" class="form-control me-2" placeholder="Buscar usuario..."
+                        required>
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                </form>
+
+                <script>
+                    document.querySelector('form').addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        let username = document.getElementById('search').value.trim();
+                        if (username) {
+                            window.location.href = "{{ url('/') }}/" + encodeURIComponent(username);
+                        }
+                    });
+                </script>
+            @endauth
 
             <nav class="flex gap-2 items-center">
                 @auth
+
+
                     <a href="{{ route('map') }}"
                         class="flex items-center gap-4 bg-white border p-2 text-gray-600 rounded text-sm uppercase font-bold cursor-pointer mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
@@ -33,7 +52,7 @@
                         </svg>
                     </a>
 
-                    <a href=""
+                    <a href="{{ route('messages.index') }}"
                         class="flex items-center gap-4 bg-white border p-2 text-gray-600 rounded text-sm uppercase font-bold cursor-pointer mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

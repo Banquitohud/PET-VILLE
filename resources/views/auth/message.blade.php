@@ -1,71 +1,144 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mensajes - Pet Ville</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pusher/7.0.3/pusher.min.js"></script>
-    <style>
-        .chat-container { display: flex; height: 100vh; }
-        .sidebar { width: 25%; border-right: 1px solid #ddd; overflow-y: auto; }
-        .chat-box { flex: 1; display: flex; flex-direction: column; }
-        .messages { flex: 1; padding: 15px; overflow-y: auto; }
-        .message { padding: 10px; border-radius: 10px; margin-bottom: 10px; }
-        .sent { background-color: #d1e7dd; align-self: flex-end; }
-        .received { background-color: #f8d7da; align-self: flex-start; }
-        .input-area { display: flex; padding: 10px; border-top: 1px solid #ddd; }
-        .input-area input, .input-area button { margin-right: 10px; }
-    </style>
-</head>
-<body>
-    <div class="chat-container">
-        <div class="sidebar p-3">
-            <h5>Conversaciones</h5>
-            <ul id="conversation-list" class="list-group">
-                <!-- Lista de contactos cargada dinámicamente -->
-            </ul>
-        </div>
-        <div class="chat-box">
-            <div class="messages" id="messages"></div>
-            <div class="input-area">
-                <input type="text" id="message-input" class="form-control" placeholder="Escribe un mensaje...">
-                <input type="file" id="image-input" class="form-control">
-                <button class="btn btn-primary" onclick="sendMessage()">Enviar</button>
-            </div>
+@extends('layouts.app')
+
+@section('titulo', 'Mensajes')
+
+@section('contenido')
+<style>
+    .chat-container {
+        height: 80vh;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .sidebar {
+        width: 280px;
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        overflow-y: auto;
+    }
+
+    .chat-box {
+        display: flex;
+        flex-direction: column;
+        background-color: #fff;
+    }
+
+    .messages {
+        padding: 1rem;
+        overflow-y: auto;
+        flex-grow: 1;
+        background-color: #e9ecef;
+    }
+
+    .message {
+        max-width: 60%;
+        padding: 10px 15px;
+        border-radius: 20px;
+        margin-bottom: 10px;
+        word-break: break-word;
+    }
+
+    .message.sent {
+        background-color: #0d6efd;
+        color: white;
+        align-self: flex-end;
+    }
+
+    .message.received {
+        background-color: #ffffff;
+        color: #000;
+        align-self: flex-start;
+    }
+
+    .input-area {
+        border-top: 1px solid #dee2e6;
+        padding: 10px;
+    }
+
+    .user-item {
+        cursor: pointer;
+    }
+
+    .user-item:hover {
+        background-color: #e2e6ea;
+    }
+
+    .user-item.active {
+        background-color: #d6d8db;
+        font-weight: bold;
+    }
+</style>
+
+<div class="chat-container d-flex">
+    <div class="sidebar p-3">
+        <h5>Conversaciones</h5>
+        <ul id="conversation-list" class="list-group">
+            @foreach($users as $user)
+                <li class="list-group-item user-item" data-id="{{ $user->id }}">
+                    {{ $user->name }}
+                </li>
+            @endforeach
+        </ul>
+    </div>
+    <div class="chat-box flex-grow-1 d-flex flex-column">
+        <div class="messages" id="messages"></div>
+        <div class="input-area d-flex align-items-center">
+            <input type="text" id="message-input" class="form-control me-2" placeholder="Escribe un mensaje...">
+            <input type="file" id="image-input" class="form-control me-2">
+            <button class="btn btn-primary" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
+</div>
 
-    <script>
-        const userId = {{ auth()->id() }};
-        const messagesContainer = document.getElementById('messages');
+<script>
+    const userId = {{ auth()->id() }};
+    let selectedUserId = null;
+    const messagesContainer = document.getElementById('messages');
+    const userItems = document.querySelectorAll('.user-item');
 
-        function sendMessage() {
-            const text = document.getElementById('message-input').value;
-            const imageInput = document.getElementById('image-input').files[0];
+    userItems.forEach(item => {
+        item.addEventListener('click', function () {
+            userItems.forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
 
-            let formData = new FormData();
-            formData.append('text', text);
-            if (imageInput) formData.append('image', imageInput);
-
-            axios.post('/messages/send', formData)
-                .then(response => {
-                    document.getElementById('message-input').value = '';
-                    document.getElementById('image-input').value = '';
-                });
-        }
-
-        Pusher.logToConsole = true;
-        const pusher = new Pusher('PUSHER_APP_KEY', { cluster: 'PUSHER_CLUSTER', encrypted: true });
-        const channel = pusher.subscribe('chat');
-
-        channel.bind('message-sent', function(data) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', data.user_id === userId ? 'sent' : 'received');
-            messageDiv.textContent = data.text;
-            messagesContainer.appendChild(messageDiv);
+            selectedUserId = this.getAttribute('data-id');
+            loadMessages(selectedUserId);
         });
-    </script>
-</body>
-</html>
+    });
+
+    function loadMessages(toUserId) {
+        axios.get(/messages/${toUserId})
+            .then(response => {
+                messagesContainer.innerHTML = '';
+                response.data.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.classList.add('message');
+                    messageDiv.classList.add(msg.user_id === userId ? 'sent' : 'received');
+                    messageDiv.textContent = msg.text;
+                    messagesContainer.appendChild(messageDiv);
+                });
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+    }
+
+    function sendMessage() {
+        if (!selectedUserId) return;
+
+        const text = document.getElementById('message-input').value;
+        const imageInput = document.getElementById('image-input').files[0];
+
+        let formData = new FormData();
+        formData.append('text', text);
+        formData.append('receiver_id', selectedUserId);
+        if (imageInput) formData.append('image', imageInput);
+
+        axios.post('/messages/send', formData)
+            .then(() => {
+                document.getElementById('message-input').value = '';
+                document.getElementById('image-input').value = '';
+                loadMessages(selectedUserId);
+            });
+    }
+</script>
+@endsection

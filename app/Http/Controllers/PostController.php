@@ -96,4 +96,10 @@ class PostController extends Controller
     {
         return view('auth.localizacion');
     }
+
+    //mapa
+    public function map   ()
+    {
+        return view('map');
+    }
 }

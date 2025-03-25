@@ -1,5 +1,4 @@
 @extends('layouts.app')
-
 @section('titulo')
 localizacion
 @endsection

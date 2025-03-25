@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 class MapController extends Controller
 {
-    public function index   ()
+    public function index()
     {
         return view('map');
     }

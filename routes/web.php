@@ -15,62 +15,61 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Livewire\LikePost;
 use App\Http\Controllers\MessageController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
 
-Route::get('/', HomeController::class )->name('home');
 
-// Rutas de Registro y Autentificación
-Route::get('/register', [RegisterController::class, 'index'])->name('register.index');
-Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
-Route::get('/login', [LoginController::class, 'index'])->name('login');
-Route::post('/login', [LoginController::class, 'store']);
+// 🏠 Página principal
+Route::get('/', HomeController::class)->name('home');
+
+// 👤 Registro y Autenticación
+Route::prefix('register')->name('register.')->group(function () {
+    Route::get('/', [RegisterController::class, 'index'])->name('index');
+    Route::post('/', [RegisterController::class, 'store'])->name('store');
+});
+
+Route::prefix('login')->group(function () {
+    Route::get('/', [LoginController::class, 'index'])->name('login');
+    Route::post('/', [LoginController::class, 'store']);
+});
+
 Route::post('/logout', [LogoutController::class, 'store'])->name('logout');
 
-// Rutas para el perifl de usuario
-Route::get('/editar-perfil', [PerfilController::class, 'index'])->name('perfil.index');
-Route::post('/editar-perfil', [PerfilController::class, 'store'])->name('perfil.store');
+// ⚙ Perfil de Usuario
+Route::prefix('editar-perfil')->name('perfil.')->group(function () {
+    Route::get('/', [PerfilController::class, 'index'])->name('index');
+    Route::post('/', [PerfilController::class, 'store'])->name('store');
+});
 
-// Rutas de Posts
-Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
-Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
-Route::get('/{user:username}/posts/{post}', [PostController::class, 'show'])->name('posts.show');
-Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+// 💬 Mensajes (requiere autenticación)
+Route::middleware('auth')->prefix('messages')->name('messages.')->group(function () {
+    Route::get('/', [MessageController::class, 'index'])->name('index');
+    Route::get('/{user}', [MessageController::class, 'getMessages'])->name('get');
+    Route::post('/send', [MessageController::class, 'sendMessage'])->name('send');
+});
 
-// Ruta de Publicar comentarios
+// 🗺 Mapa
+Route::get('/map', [MapController::class, 'index'])->name('map');
+
+// 📝 Publicaciones
+Route::prefix('posts')->name('posts.')->group(function () {
+    Route::get('/create', [PostController::class, 'create'])->name('create');
+    Route::post('/', [PostController::class, 'store'])->name('store');
+    Route::get('/{user:username}/{post}', [PostController::class, 'show'])->name('show');
+    Route::delete('/{post}', [PostController::class, 'destroy'])->name('destroy');
+
+    // ❤ Likes
+    Route::post('/{post}/likes', [LikeController::class, 'store'])->name('likes.store');
+    Route::delete('/{post}/likes', [LikeController::class, 'destroy'])->name('likes.destroy');
+});
+
+// 💬 Comentarios
 Route::post('/{user:username}/posts/{post}', [ComentarioController::class, 'store'])->name('comentarios.store');
 
-// Ruta de subida de imágenes al servidor
+// 📷 Imágenes
 Route::post('/imagenes', [ImagenController::class, 'store'])->name('imagenes.store');
 
-
-// Like a las fotos
-Route::post('/posts/{post}/likes', [LikeController::class, 'store'])->name('posts.likes.store');
-Route::delete('/posts/{post}/likes', [LikeController::class, 'destroy'])->name('posts.likes.destroy');
-
-// Ruta con variable que se verifica la última para evitar problemas con las otras rutas
-Route::get('/{user:username}', [PostController::class, 'index'])->name('posts.index');
-
-
-// Siguiendo usuarios
+// ➕ / ➖ Seguidores
 Route::post('/{user:username}/follow', [FollowerController::class, 'store'])->name('users.follow');
 Route::delete('/{user:username}/unfollow', [FollowerController::class, 'destroy'])->name('users.unfollow');
 
-//Api
-Route::get('/map', function () { dd('La ruta funciona correctamente');});
-
-Route::get('/messages', [MessageController::class, 'index'])->name('messages');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
-    Route::get('/messages/{user}', [MessageController::class, 'getMessages'])->name('messages.get');
-    Route::post('/messages/send', [MessageController::class, 'sendMessage'])->name('messages.send');
-});
+// 📄 Perfil de Usuario y sus Posts
+Route::get('/{user:username}', [PostController::class, 'index'])->name('posts.index');
