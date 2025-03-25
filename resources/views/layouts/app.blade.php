@@ -21,22 +21,42 @@
                 <h1 class="text-3xl font-black">Pet ville</h1>
             </a>
             @auth
-                <form action="{{ route('posts.index', '') }}" method="GET" class="d-flex">
+                <form action="{{ route('posts.index', '') }}" method="GET" class="d-flex" id="searchForm">
                     <input type="text" id="search" name="user" class="form-control me-2" placeholder="Buscar usuario..."
                         required>
                     <button type="submit" class="btn btn-primary">Buscar</button>
                 </form>
 
                 <script>
-                    document.querySelector('form').addEventListener('submit', function (event) {
+                    document.getElementById('searchForm').addEventListener('submit', async function (event) {
                         event.preventDefault();
                         let username = document.getElementById('search').value.trim();
-                        if (username) {
-                            window.location.href = "{{ url('/') }}/" + encodeURIComponent(username);
+                        let userUrl = "{{ url('/') }}/" + encodeURIComponent(username);
+
+                        if (!username) {
+                            alert("Usuario no encontrado.");
+                            window.location.href = "{{ route('home') }}";
+                            return;
+                        }
+
+                        try {
+                            let response = await fetch(userUrl, { method: 'HEAD' });
+
+                            if (response.status === 404) {
+                                alert("Usuario no encontrado.");
+                                window.location.href = "{{ route('home') }}";
+                            } else {
+                                window.location.href = userUrl;
+                            }
+                        } catch (error) {
+                            console.error("Error en la búsqueda:", error);
+                            alert("Hubo un problema al buscar el usuario.");
+                            window.location.href = "{{ route('home') }}";
                         }
                     });
                 </script>
             @endauth
+
 
             <nav class="flex gap-2 items-center">
                 @auth
