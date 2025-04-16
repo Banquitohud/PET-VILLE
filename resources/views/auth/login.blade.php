@@ -1,9 +1,8 @@
 @extends('layouts.app')
 
 @section('titulo')
-    Inicia Sesión en Petville
+Porque las mejores historias no solo se cuentan, sino que también se comparten. ¡Bienvenidos a Pet Ville! 🐾✨
 @endsection
-
 @section('contenido')
 
 <div class="md:flex md:justify-center md:gap-10 md:items-center">
