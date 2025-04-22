@@ -14,7 +14,7 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Livewire\LikePost;
 use App\Http\Controllers\MessageController;
-
+use App\Http\Controllers\forgot_password;
 
 
 // 🏠 Página principal
@@ -31,6 +31,7 @@ Route::prefix('login')->group(function () {
     Route::post('/', [LoginController::class, 'store']);
 });
 
+Route::get('/forgot-password', [forgot_password::class, 'index'])->name('password.request');
 Route::post('/logout', [LogoutController::class, 'store'])->name('logout');
 
 // ⚙ Perfil de Usuario
@@ -73,3 +74,18 @@ Route::delete('/{user:username}/unfollow', [FollowerController::class, 'destroy'
 
 // 📄 Perfil de Usuario y sus Posts
 Route::get('/{user:username}', [PostController::class, 'index'])->name('posts.index');
+
+Route::get('/forgot-password', [forgot_password::class, 'index'])->name('password.request');
+Route::post('/forgot-password', function (Illuminate\Http\Request $request) {
+    $request->validate(['email' => 'required|email']);
+
+    $status = \Illuminate\Support\Facades\Password::sendResetLink(
+        $request->only('email')
+    );
+
+    return $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT
+        ? back()->with(['status' => __($status)])
+        : back()->withErrors(['email' => __($status)]);
+})->name('password.email');
+Route::get('/reset-password/{token}', [forgot_password::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [forgot_password::class, 'reset'])->name('password.update');
