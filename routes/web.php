@@ -15,7 +15,8 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Livewire\LikePost;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\forgot_password;
-
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Log;
 
 // 🏠 Página principal
 Route::get('/', HomeController::class)->name('home');
@@ -77,15 +78,21 @@ Route::get('/{user:username}', [PostController::class, 'index'])->name('posts.in
 
 Route::get('/forgot-password', [forgot_password::class, 'index'])->name('password.request');
 Route::post('/forgot-password', function (Illuminate\Http\Request $request) {
+
     $request->validate(['email' => 'required|email']);
 
-    $status = \Illuminate\Support\Facades\Password::sendResetLink(
-        $request->only('email')
-    );
+    try {
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
 
-    return $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT
-        ? back()->with(['status' => __($status)])
-        : back()->withErrors(['email' => __($status)]);
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
+    } catch (\Exception $e) {
+        Log::error('Error en enviar enlace de recuperación: ' . $e->getMessage());
+        return back()->withErrors(['email' => 'Error: ' . $e->getMessage()]);
+    }
 })->name('password.email');
 Route::get('/reset-password/{token}', [forgot_password::class, 'showResetForm'])->name('password.reset');
 Route::post('/reset-password', [forgot_password::class, 'reset'])->name('password.update');
