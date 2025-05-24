@@ -102,4 +102,5 @@ class PostController extends Controller
     {
         return view('map');
     }
+
 }

@@ -61,6 +61,14 @@
             <nav class="flex gap-2 items-center">
                 @auth
 
+                    <a href="{{ route('donativos.create') }}"
+                        class="flex items-center gap-4 bg-white border p-2 text-gray-600 rounded text-sm uppercase font-bold cursor-pointer mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1v22M5 6l7 7 7-7" />
+                        </svg>
+                        Donar
+                    </a>
 
                     <a href="{{ route('map') }}"
                         class="flex items-center gap-4 bg-white border p-2 text-gray-600 rounded text-sm uppercase font-bold cursor-pointer mr-2">
@@ -109,7 +117,7 @@
                 @endguest
             </nav>
         </div>
-            
+
     </header>
 
     <main class="container mx-auto mt-10">
